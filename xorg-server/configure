@@ -12048,10 +12048,11 @@ _ACEOF
 
 
 
-CHANGELOG_CMD="(GIT_DIR=\$(top_srcdir)/.git git log > \$(top_srcdir)/.changelog.tmp && \
+CHANGELOG_CMD="((GIT_DIR=\$(top_srcdir)/.git git log > \$(top_srcdir)/.changelog.tmp) 2>/dev/null && \
 mv \$(top_srcdir)/.changelog.tmp \$(top_srcdir)/ChangeLog) \
-|| (rm -f \$(top_srcdir)/.changelog.tmp; touch \$(top_srcdir)/ChangeLog; \
-echo 'git directory not found: installing possibly empty changelog.' >&2)"
+|| (rm -f \$(top_srcdir)/.changelog.tmp; test -e \$(top_srcdir)/ChangeLog || ( \
+touch \$(top_srcdir)/ChangeLog; \
+echo 'git failed to create ChangeLog: installing empty ChangeLog.' >&2))"
 
 
 
@@ -12059,13 +12060,44 @@ echo 'git directory not found: installing possibly empty changelog.' >&2)"
 macros_datadir=`$PKG_CONFIG --print-errors --variable=pkgdatadir xorg-macros`
 INSTALL_CMD="(cp -f "$macros_datadir/INSTALL" \$(top_srcdir)/.INSTALL.tmp && \
 mv \$(top_srcdir)/.INSTALL.tmp \$(top_srcdir)/INSTALL) \
-|| (rm -f \$(top_srcdir)/.INSTALL.tmp; touch \$(top_srcdir)/INSTALL; \
-echo 'util-macros \"pkgdatadir\" from xorg-macros.pc not found: installing possibly empty INSTALL.' >&2)"
+|| (rm -f \$(top_srcdir)/.INSTALL.tmp; test -e \$(top_srcdir)/INSTALL || ( \
+touch \$(top_srcdir)/INSTALL; \
+echo 'failed to copy INSTALL from util-macros: installing empty INSTALL.' >&2))"
 
 
 
 
 
+
+case $host_os in
+    solaris*)
+        # Solaris 2.0 - 11.3 use SysV man page section numbers, so we
+        # check for a man page file found in later versions that use
+        # traditional section numbers instead
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for /usr/share/man/man7/attributes.7" >&5
+$as_echo_n "checking for /usr/share/man/man7/attributes.7... " >&6; }
+if ${ac_cv_file__usr_share_man_man7_attributes_7+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "/usr/share/man/man7/attributes.7"; then
+  ac_cv_file__usr_share_man_man7_attributes_7=yes
+else
+  ac_cv_file__usr_share_man_man7_attributes_7=no
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_file__usr_share_man_man7_attributes_7" >&5
+$as_echo "$ac_cv_file__usr_share_man_man7_attributes_7" >&6; }
+if test "x$ac_cv_file__usr_share_man_man7_attributes_7" = xyes; then :
+  SYSV_MAN_SECTIONS=false
+else
+  SYSV_MAN_SECTIONS=true
+fi
+
+        ;;
+    *) SYSV_MAN_SECTIONS=false ;;
+esac
 
 if test x$APP_MAN_SUFFIX = x    ; then
     APP_MAN_SUFFIX=1
@@ -12082,9 +12114,9 @@ if test x$LIB_MAN_DIR = x    ; then
 fi
 
 if test x$FILE_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	FILE_MAN_SUFFIX=4  ;;
-	*)		FILE_MAN_SUFFIX=5  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				FILE_MAN_SUFFIX=4  ;;
+	*)				FILE_MAN_SUFFIX=5  ;;
     esac
 fi
 if test x$FILE_MAN_DIR = x    ; then
@@ -12092,9 +12124,9 @@ if test x$FILE_MAN_DIR = x    ; then
 fi
 
 if test x$MISC_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	MISC_MAN_SUFFIX=5  ;;
-	*)		MISC_MAN_SUFFIX=7  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				MISC_MAN_SUFFIX=5  ;;
+	*)				MISC_MAN_SUFFIX=7  ;;
     esac
 fi
 if test x$MISC_MAN_DIR = x    ; then
@@ -12102,9 +12134,9 @@ if test x$MISC_MAN_DIR = x    ; then
 fi
 
 if test x$DRIVER_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	DRIVER_MAN_SUFFIX=7  ;;
-	*)		DRIVER_MAN_SUFFIX=4  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				DRIVER_MAN_SUFFIX=7  ;;
+	*)				DRIVER_MAN_SUFFIX=4  ;;
     esac
 fi
 if test x$DRIVER_MAN_DIR = x    ; then
@@ -12112,9 +12144,9 @@ if test x$DRIVER_MAN_DIR = x    ; then
 fi
 
 if test x$ADMIN_MAN_SUFFIX = x    ; then
-    case $host_os in
-	solaris*)	ADMIN_MAN_SUFFIX=1m ;;
-	*)		ADMIN_MAN_SUFFIX=8  ;;
+    case $SYSV_MAN_SECTIONS in
+	true)				ADMIN_MAN_SUFFIX=1m ;;
+	*)				ADMIN_MAN_SUFFIX=8  ;;
     esac
 fi
 if test x$ADMIN_MAN_DIR = x    ; then
@@ -13878,6 +13910,11 @@ else
     lt_cv_sys_max_cmd_len=8192;
     ;;
 
+  mint*)
+    # On MiNT this can take a long time and run out of memory.
+    lt_cv_sys_max_cmd_len=8192;
+    ;;
+
   amigaos*)
     # On AmigaOS with pdksh, this test takes hours, literally.
     # So we just punt and use a minimum line length of 8192.
@@ -14350,7 +14387,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd* | netbsdelf*-gnu)
+netbsd*)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
   else
@@ -14709,7 +14746,7 @@ esac
 fi
 
 : ${AR=ar}
-: ${AR_FLAGS=cr}
+: ${AR_FLAGS=cru}
 
 
 
@@ -15210,8 +15247,11 @@ _LT_EOF
   test $ac_status = 0; }; then
     # Now try to grab the symbols.
     nlist=conftest.nm
-    $ECHO "$as_me:$LINENO: $NM conftest.$ac_objext | $lt_cv_sys_global_symbol_pipe > $nlist" >&5
-    if eval "$NM" conftest.$ac_objext \| "$lt_cv_sys_global_symbol_pipe" \> $nlist 2>&5 && test -s "$nlist"; then
+    if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$NM conftest.$ac_objext \| "$lt_cv_sys_global_symbol_pipe" \> $nlist\""; } >&5
+  (eval $NM conftest.$ac_objext \| "$lt_cv_sys_global_symbol_pipe" \> $nlist) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && test -s "$nlist"; then
       # Try sorting and uniquifying the output.
       if sort "$nlist" | uniq > "$nlist"T; then
 	mv -f "$nlist"T "$nlist"
@@ -15637,10 +15677,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  powerpcle-*linux*)
+	  powerpcle-*linux*|powerpc64le-*linux*)
 	    LD="${LD-ld} -m elf64lppc"
 	    ;;
-	  powerpc-*linux*)
+	  powerpc-*linux*|powerpc64-*linux*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -16430,8 +16470,8 @@ int forced_loaded() { return 2;}
 _LT_EOF
       echo "$LTCC $LTCFLAGS -c -o conftest.o conftest.c" >&5
       $LTCC $LTCFLAGS -c -o conftest.o conftest.c 2>&5
-      echo "$AR cr libconftest.a conftest.o" >&5
-      $AR cr libconftest.a conftest.o 2>&5
+      echo "$AR cru libconftest.a conftest.o" >&5
+      $AR cru libconftest.a conftest.o 2>&5
       echo "$RANLIB libconftest.a" >&5
       $RANLIB libconftest.a 2>&5
       cat > conftest.c << _LT_EOF
@@ -17590,12 +17630,6 @@ lt_prog_compiler_static=
 	lt_prog_compiler_pic='-KPIC'
 	lt_prog_compiler_static='-static'
         ;;
-      # flang / f18. f95 an alias for gfortran or flang on Debian
-      flang* | f18* | f95*)
-	lt_prog_compiler_wl='-Wl,'
-	lt_prog_compiler_pic='-fPIC'
-	lt_prog_compiler_static='-static'
-        ;;
       # icc used to be incompatible with GCC.
       # ICC 10 doesn't accept -KPIC any more.
       icc* | ifort*)
@@ -18072,9 +18106,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd* | bitrig*)
     with_gnu_ld=no
     ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs=no
-    ;;
   esac
 
   ld_shlibs=yes
@@ -18329,7 +18360,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -18999,7 +19030,6 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
 	if test yes = "$lt_cv_irix_exported_symbol"; then
           archive_expsym_cmds='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags $wl-soname $wl$soname `test -n "$verstring" && func_echo_all "$wl-set_version $wl$verstring"` $wl-update_registry $wl$output_objdir/so_locations $wl-exports_file $wl$export_symbols -o $lib'
 	fi
-	link_all_deplibs=no
       else
 	archive_cmds='$CC -shared $libobjs $deplibs $compiler_flags -soname $soname `test -n "$verstring" && func_echo_all "-set_version $verstring"` -update_registry $output_objdir/so_locations -o $lib'
 	archive_expsym_cmds='$CC -shared $libobjs $deplibs $compiler_flags -soname $soname `test -n "$verstring" && func_echo_all "-set_version $verstring"` -update_registry $output_objdir/so_locations -exports_file $export_symbols -o $lib'
@@ -19021,7 +19051,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       esac
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -19866,11 +19896,11 @@ darwin* | rhapsody*)
   version_type=darwin
   need_lib_prefix=no
   need_version=no
-  library_names_spec='$libname$release$major$shared_ext $libname$shared_ext'
+  library_names_spec='$libname$release$versuffix$shared_ext $libname$release$major$shared_ext $libname$shared_ext'
   soname_spec='$libname$release$major$shared_ext'
   shlibpath_overrides_runpath=yes
   shlibpath_var=DYLD_LIBRARY_PATH
-  shrext_cmds='`test .$module = .yes && echo .so || echo .dylib`'
+  shrext_cmds='`test .$module = .yes && echo .bundle || echo .dylib`'
 
   sys_lib_search_path_spec="$sys_lib_search_path_spec /usr/local/lib"
   sys_lib_dlsearch_path_spec='/usr/local/lib /lib /usr/lib'
@@ -19896,7 +19926,14 @@ freebsd* | dragonfly*)
     *) objformat=elf ;;
     esac
   fi
-  version_type=freebsd-$objformat
+  # Handle Gentoo/FreeBSD as it was Linux
+  case $host_vendor in
+    gentoo)
+      version_type=linux ;;
+    *)
+      version_type=freebsd-$objformat ;;
+  esac
+
   case $version_type in
     freebsd-elf*)
       library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
@@ -19907,6 +19944,12 @@ freebsd* | dragonfly*)
     freebsd-*)
       library_names_spec='$libname$release$shared_ext$versuffix $libname$shared_ext$versuffix'
       need_version=yes
+      ;;
+    linux)
+      library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+      soname_spec='${libname}${release}${shared_ext}$major'
+      need_lib_prefix=no
+      need_version=no
       ;;
   esac
   shlibpath_var=LD_LIBRARY_PATH
@@ -20134,18 +20177,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -21502,7 +21533,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -21548,7 +21579,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -21572,7 +21603,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -21617,7 +21648,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -21641,7 +21672,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -21679,10 +21710,9 @@ fi
 
 
 
-for ac_prog in cpp
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}cpp", so it can be a program name with args.
+set dummy ${ac_tool_prefix}cpp; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_RAWCPP+:} false; then :
@@ -21722,9 +21752,63 @@ $as_echo "no" >&6; }
 fi
 
 
-  test -n "$RAWCPP" && break
+fi
+if test -z "$ac_cv_path_RAWCPP"; then
+  ac_pt_RAWCPP=$RAWCPP
+  # Extract the first word of "cpp", so it can be a program name with args.
+set dummy cpp; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_RAWCPP+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_RAWCPP in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_RAWCPP="$ac_pt_RAWCPP" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+as_dummy="$PATH:/bin:/usr/bin:/usr/lib:/usr/libexec:/usr/ccs/lib:/usr/ccs/lbin:/lib"
+for as_dir in $as_dummy
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_RAWCPP="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
 done
-test -n "$RAWCPP" || RAWCPP="${CPP}"
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_RAWCPP=$ac_cv_path_ac_pt_RAWCPP
+if test -n "$ac_pt_RAWCPP"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_RAWCPP" >&5
+$as_echo "$ac_pt_RAWCPP" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_RAWCPP" = x; then
+    RAWCPP="${CPP}"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    RAWCPP=$ac_pt_RAWCPP
+  fi
+else
+  RAWCPP="$ac_cv_path_RAWCPP"
+fi
 
 
 # Check for flag to avoid builtin definitions - assumes unix is predefined,
@@ -34849,6 +34933,7 @@ See \`config.log' for more details" "$LINENO" 5; }
     cat <<_LT_EOF >> "$cfgfile"
 #! $SHELL
 # Generated automatically by $as_me ($PACKAGE) $VERSION
+# Libtool was configured on host `(hostname || uname -n) 2>/dev/null | sed 1q`:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 
 # Provide generalized library-building support services.
