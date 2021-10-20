@@ -1,0 +1,10 @@
+prefix=/home/via/prog/xserver/libpciaccess-0.16/build
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: pciaccess
+Description: Library providing generic access to the PCI bus and devices.
+Version: 0.16
+Cflags: -I${includedir}
+Libs: -L${libdir} -lpciaccess

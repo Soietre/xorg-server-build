@@ -1,0 +1,8 @@
+
+message("CMAKE_CURRENT_LIST_DIR : ${CMAKE_CURRENT_LIST_DIR}")
+get_filename_component(XFONT2_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
+get_filename_component(XFONT2_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include" ABSOLUTE)
+get_filename_component(XFONT2_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/lib" ABSOLUTE)
+
+message("XFONT2_LIB_DIR : {XFONT2_LIB_DIR}")
+
