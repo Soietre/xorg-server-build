@@ -1,0 +1,20 @@
+set(PackName "libXdmcp-1.1.3")
+message("CMAKE_CURRENT_LIST_DIR : ${CMAKE_CURRENT_LIST_DIR}")
+get_filename_component(XDMCP_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/${PackName}" ABSOLUTE)
+get_filename_component(XDMCP_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/${PackName}/include" ABSOLUTE)
+get_filename_component(XDMCP_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/${PackName}/lib" ABSOLUTE)
+
+
+#for xorg-server configure XDMCP_CFLAGS XDMCP_LIBS
+message("XDMCP_LIB_DIR : ${XDMCP_LIB_DIR}")
+
+set(XDMCP_CFLAGS "-I${XDMCP_INCLUDE_DIR} ")
+set(XDMCP_LIBS "-L${XDMCP_LIB_DIR} -lXdmcp ")
+message("XDMCP_CFLAGS: ${XDMCP_CFLAGS}")
+message("XDMCP_LIBS : ${XDMCP_LIBS}")
+
+#string(APPEND XSERVERLIBS_CFLAGS ${XDMCP_CFLAGS})
+#string(APPEND XSERVERLIBS_LIBS ${XDMCP_LIBS})
+#string(APPEND XSERVERCFLAGS_CFLAGS ${XDMCP_CFLAGS})
+#string(APPEND XSERVERCFLAGS_LIBS ${XDMCP_LIBS})
+

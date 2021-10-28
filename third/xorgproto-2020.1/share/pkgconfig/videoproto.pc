@@ -1,0 +1,8 @@
+prefix=/home/via/prog/xserver/xorgproto-2020.1/build
+exec_prefix=${prefix}
+includedir=${prefix}/include
+
+Name: VideoProto
+Description: Video extension headers
+Version: 2.3.3
+Cflags: -I${includedir}

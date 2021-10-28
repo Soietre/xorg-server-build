@@ -1,0 +1,11 @@
+prefix=/home/via/prog/xserver/libxcb-1.14/build
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: XCB Sync
+Description: XCB Sync Extension
+Version: 1.14
+Requires.private: xcb
+Libs: -L${libdir} -lxcb-sync
+Cflags: -I${includedir}

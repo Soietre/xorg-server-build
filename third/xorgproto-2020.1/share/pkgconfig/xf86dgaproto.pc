@@ -1,0 +1,8 @@
+prefix=/home/via/prog/xserver/xorgproto-2020.1/build
+exec_prefix=${prefix}
+includedir=${prefix}/include
+ 
+Name: XF86DGAProto
+Description: XF86DGA extension headers
+Version: 2.1
+Cflags: -I${includedir}

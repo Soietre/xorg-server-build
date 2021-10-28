@@ -1,0 +1,10 @@
+prefix=/home/via/prog/xserver/libfontenc-1.1.4/build
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: fontenc
+Description: The fontenc Library
+Version: 1.1.4
+Cflags: -I${includedir}
+Libs: -L${libdir} -lfontenc
