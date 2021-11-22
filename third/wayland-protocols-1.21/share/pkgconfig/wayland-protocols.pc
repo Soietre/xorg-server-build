@@ -1,0 +1,7 @@
+prefix=/home/via/prog/xserver/wayland-protocols-1.21/build
+datarootdir=${prefix}/share
+pkgdatadir=${pc_sysrootdir}${datarootdir}/wayland-protocols
+
+Name: Wayland Protocols
+Description: Wayland protocol files
+Version: 1.21

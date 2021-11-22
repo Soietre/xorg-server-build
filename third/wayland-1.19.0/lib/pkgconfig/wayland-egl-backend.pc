@@ -1,0 +1,9 @@
+prefix=/home/via/prog/xserver/wayland-1.19.0/build
+exec_prefix=${prefix}
+includedir=${prefix}/include
+
+Name: wayland-egl-backend
+Description: Backend wayland-egl interface
+Version: 3
+Libs:
+Cflags: -I${includedir}
