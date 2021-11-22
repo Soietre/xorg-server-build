@@ -1,0 +1,19 @@
+set(PackName "libXAU-1.14")
+message("CMAKE_CURRENT_LIST_DIR : ${CMAKE_CURRENT_LIST_DIR}")
+get_filename_component(XAU_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/${PackName}" ABSOLUTE)
+get_filename_component(XAU_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/${PackName}/include" ABSOLUTE)
+get_filename_component(XAU_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/${PackName}/lib" ABSOLUTE)
+
+
+#for xorg-server configure XAU_CFLAGS XAU_LIBS
+message("XAU_LIB_DIR : ${XAU_LIB_DIR}")
+
+set(XAU_CFLAGS "-I${XAU_INCLUDE_DIR} ")
+set(XAU_LIBS "-L${XAU_LIB_DIR} -lXau ")
+message("XAU_CFLAGS: ${XAU_CFLAGS}")
+message("XAU_LIBS : ${XAU_LIBS}")
+
+string(APPEND XSERVERLIBS_CFLAGS ${XAU_CFLAGS})
+string(APPEND XSERVERLIBS_LIBS ${XAU_LIBS})
+string(APPEND XSERVERCFLAGS_CFLAGS ${XAU_CFLAGS})
+string(APPEND XSERVERCFLAGS_LIBS ${XAU_LIBS})
